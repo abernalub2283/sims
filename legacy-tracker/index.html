@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legacy Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>🌊 Legacy Tracker 🌊</h1>
+    <p class="subtitle">Generation by generation</p>
+    <div class="selectors">
+        <select id="legacy-select"></select>
+        <select id="gen-select"></select>
+    </div>
+    <div id="checklist"></div>
+    <button id="roll-btn">Roll a Mini Challenge</button>
+    <div id="roll-result"></div>
+
+    <script>
+        const seedData = {
+            "miniChallenges": [
+                "Have a(nother) baby",
+                "Redesign a room in the house",
+                "Throw a dinner party",
+                "Learn a new recipe",
+                "Take a vacation",
+                "Befriend a neighbor",
+                "Start a new hobby",
+                "Adopt a pet",
+                "Travel to a new place",
+                "Spend 12 hours off lot",
+                "Host a themed party"
+            ],
+            "legacies": [
+                {
+                    "name": "Sugarspun Tide",
+                    "generations": [
+                        { "number": 0, "heir": "Melusine Brinesweet", "aspiration": "Bestselling Author", "aspirationDone": false, "career": "Writer", "careerLevel": 1, "careerGoal": 10 },
+                        { "number": 1, "heir": "Marisol Brinesweet", "aspiration": "Beach Life", "aspirationDone": false, "career": "Conservationist", "careerLevel": 1, "careerGoal": 10 },
+                        { "number": 2, "heir": "Coraline Brinesweet", "aspiration": "Angling Ace", "aspirationDone": false, "career": "Scientist", "careerLevel": 1, "careerGoal": 10 },
+                        { "number": 3, "heir": "Praline Brinesweet", "aspiration": "Master Chef", "aspirationDone": false, "career": "Culinary", "careerLevel": 1, "careerGoal": 10 },
+                        { "number": 4, "heir": "Skye Brinesweet", "aspiration": "World-Famous Celebrity", "aspirationDone": false, "career": "Social Media", "careerLevel": 1, "careerGoal": 10 },
+                        { "number": 5, "heir": "Azura Brinesweet", "aspiration": "Outdoor Enthusiast", "aspirationDone": false, "career": "Freelancer (Artist)", "careerLevel": 1, "careerGoal": 10 },
+                        { "number": 6, "heir": "Violet Brinesweet", "aspiration": "Successful Lineage", "aspirationDone": false, "career": "Business", "careerLevel": 1, "careerGoal": 10 }
+                    ]
+                }
+            ]
+        };
+
+        let data;
+        const saved = localStorage.getItem('legacyTracker');
+        if (saved) {
+            data = JSON.parse(saved);
+        } else {
+            data = seedData;
+            saveData();
+        }
+
+        let legacyIndex = 0;
+        let genIndex = 0;
+
+        function saveData() {
+            localStorage.setItem('legacyTracker', JSON.stringify(data));
+        }
+
+        function pickRandom(array) {
+            const index = Math.floor(Math.random() * array.length);
+            return array[index];
+        }
+
+        function currentGen() {
+            return data.legacies[legacyIndex].generations[genIndex];
+        }
+
+        const legacySelect = document.getElementById('legacy-select');
+        data.legacies.forEach(function(legacy, i) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = legacy.name;
+            legacySelect.appendChild(opt);
+        });
+
+        function buildGenSelect() {
+            const genSelect = document.getElementById('gen-select');
+            genSelect.innerHTML = '';
+            data.legacies[legacyIndex].generations.forEach(function(gen, i) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = 'Gen ' + gen.number + ': ' + gen.heir;
+                genSelect.appendChild(opt);
+            });
+            genSelect.value = genIndex;
+        }
+
+        function renderChecklist() {
+            const box = document.getElementById('checklist');
+            box.innerHTML = '';
+            const gen = currentGen();
+
+            const h2 = document.createElement('h2');
+            h2.textContent = 'Gen ' + gen.number + ': ' + gen.heir;
+            box.appendChild(h2);
+
+            const aspRow = document.createElement('div');
+            aspRow.className = 'row';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = gen.aspirationDone;
+            checkbox.id = 'aspire-check';
+            checkbox.addEventListener('change', function(event) {
+                gen.aspirationDone = event.target.checked;
+                saveData();
+                renderChecklist();
+            });
+            const aspLabel = document.createElement('label');
+            aspLabel.htmlFor = 'aspire-check';
+            aspLabel.textContent = 'Aspiration: ' + gen.aspiration;
+            aspRow.appendChild(checkbox);
+            aspRow.appendChild(aspLabel);
+            box.appendChild(aspRow);
+
+            const careerRow = document.createElement('div');
+            careerRow.className = 'row';
+            const careerText = document.createElement('span');
+            careerText.textContent = 'Career: ' + gen.career + ' (level ' + gen.careerLevel + '/' + gen.careerGoal + ')';
+            careerRow.appendChild(careerText);
+            const promoBtn = document.createElement('button');
+            promoBtn.textContent = 'Promote';
+            promoBtn.disabled = gen.careerLevel >= gen.careerGoal;
+            promoBtn.addEventListener('click', function() {
+                if (gen.careerLevel < gen.careerGoal) {
+                    gen.careerLevel += 1;
+                    saveData();
+                    renderChecklist();
+                }
+            });
+            careerRow.appendChild(promoBtn);
+            box.appendChild(careerRow);
+        }
+
+        legacySelect.addEventListener('change', function(event) {
+            legacyIndex = parseInt(event.target.value, 10);
+            genIndex = 0;
+            buildGenSelect();
+            renderChecklist();
+        });
+
+        document.getElementById('gen-select').addEventListener('change', function(event) {
+            genIndex = parseInt(event.target.value, 10);
+            renderChecklist();
+        });
+
+        document.getElementById('roll-btn').addEventListener('click', function() {
+            const result = document.getElementById('roll-result');
+            result.innerHTML = '';
+            const p = document.createElement('p');
+            p.className = 'drawn-challenge';
+            p.textContent = pickRandom(data.miniChallenges);
+            result.appendChild(p);
+        });
+
+        buildGenSelect();
+        renderChecklist();
+    </script>
+</body>
+</html>
